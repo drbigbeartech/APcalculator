@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aircraft Performance Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.22.5/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.0.0/math.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/i18next@23.7.6/dist/umd/i18next.min.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // i18next initialization
+    i18next.init({
+      lng: 'en',
+      fallbackLng: 'en',
+      resources: {
+        en: {
+          translation: {
+            title: "Aircraft Performance Calculator",
+            obliqueShock: "Oblique Shock",
+            functions: "Functions",
+            settings: "Settings",
+            userManual: "User Manual",
+            calculateMach: "Calculate Mach Number",
+            calculatePressure: "Calculate Pressure Ratio",
+            calculateDensity: "Calculate Density Ratio",
+            calculateTemperature: "Calculate Temperature Ratio",
+            calculateWaveAngle: "Calculate Wave Angle",
+            calculateLift: "Calculate Lift",
+            calculateDrag: "Calculate Drag",
+            calculateThrust: "Calculate Thrust",
+            calculateWeight: "Calculate Weight",
+            calculateClimb: "Calculate Rate of Climb",
+            calculateDescent: "Calculate Rate of Descent",
+            calculateRange: "Calculate Maximum Range",
+            calculatePower: "Calculate Power Available",
+            calculateGlide: "Calculate Glide Velocity",
+            toggleLanguage: "Switch to Hindi",
+            toggleTheme: "Toggle Dark Mode",
+            enlargeFonts: "Enlarge Fonts",
+            initialMach: "Initial Mach Number",
+            shockAngle: "Shock Wave Angle (degrees)",
+            airDensity: "Air Density (kg/m³)",
+            velocity: "Velocity (m/s)",
+            wingArea: "Wing Area (m²)",
+            liftCoefficient: "Coefficient of Lift",
+            dragCoefficient: "Coefficient of Drag",
+            engineThrust: "Engine Thrust (N)",
+            aircraftMass: "Aircraft Mass (kg)",
+            gravity: "Gravity (m/s²)",
+            endurance: "Endurance (min)",
+            airSpeed: "Air Speed (m/s)",
+            enginePower: "Engine Power (W)",
+            dragPower: "Drag Power (W)",
+            liftToDrag: "Lift-to-Drag Ratio",
+            calculate: "Calculate",
+            result: "Result",
+            history: "Calculation History",
+            exportCSV: "Export as CSV",
+            faq: "FAQ",
+            review: "Leave a Review",
+            submit: "Submit",
+            name: "Your Name",
+            rating: "Rating (1-5)",
+            feedback: "Feedback",
+            manualContent: "This is the user manual for the Aircraft Performance Calculator:\n1. Select a panel (Oblique Shock or Functions).\n2. Enter required data in the form.\n3. Click Calculate to see results.\n4. View history in the table below.\n5. Export results as CSV."
+          }
+        },
+        hi: {
+          translation: {
+            title: "विमान प्रदर्शन कैलकुलेटर",
+            obliqueShock: "तिरछा शॉक",
+            functions: "कार्य",
+            settings: "सेटिंग्स",
+            userManual: "उपयोगकर्ता मैनुअल",
+            calculateMach: "मैक संख्या की गणना करें",
+            calculatePressure: "दबाव अनुपात की गणना करें",
+            calculateDensity: "घनत्व अनुपात की गणना करें",
+            calculateTemperature: "तापमान अनुपात की गणना करें",
+            calculateWaveAngle: "तरंग कोण की गणना करें",
+            calculateLift: "लिफ्ट की गणना करें",
+            calculateDrag: "ड्रैग की गणना करें",
+            calculateThrust: "थ्रस्ट की गणना करें",
+            calculateWeight: "वजन की गणना करें",
+            calculateClimb: "चढ़ाई दर की गणना करें",
+            calculateDescent: "अवरोहण दर की गणना करें",
+            calculateRange: "अधिकतम रेंज की गणना करें",
+            calculatePower: "उपलब्ध शक्ति की गणना करें",
+            calculateGlide: "ग्लाइड वेग की गणना करें",
+            toggleLanguage: "अंग्रेजी में स्विच करें",
+            toggleTheme: "डार्क मोड टॉगल करें",
+            enlargeFonts: "फ़ॉन्ट बड़ा करें",
+            initialMach: "प्रारंभिक मैक संख्या",
+            shockAngle: "शॉक तरंग कोण (डिग्री)",
+            airDensity: "वायु घनत्व (किग्रा/मी³)",
+            velocity: "वेग (मी/से)",
+            wingArea: "विंग क्षेत्र (मी²)",
+            liftCoefficient: "लिफ्ट गुणांक",
+            dragCoefficient: "ड्रैग गुणांक",
+            engineThrust: "इंजन थ्रस्ट (न्यूटन)",
+            aircraftMass: "विमान द्रव्यमान (किग्रा)",
+            gravity: "गुरुत्वाकर्षण (मी/से²)",
+            endurance: "सहनशक्ति (मिनट)",
+            airSpeed: "वायु गति (मी/से)",
+            enginePower: "इंजन शक्ति (वाट)",
+            dragPower: "ड्रैग शक्ति (वाट)",
+            liftToDrag: "लिफ्ट-टू-ड्रैग अनुपात",
+            calculate: "गणना करें",
+            result: "परिणाम",
+            history: "गणना इतिहास",
+            exportCSV: "CSV के रूप में निर्यात करें",
+            faq: "सामान्य प्रश्न",
+            review: "समीक्षा छोड़ें",
+            submit: "जमा करें",
+            name: "आपका नाम",
+            rating: "रेटिंग (1-5)",
+            feedback: "प्रतिक्रिया",
+            manualContent: "यह विमान प्रदर्शन कैलकुलेटर के लिए उपयोगकर्ता मैनुअल है:\n1. एक पैनल चुनें (तिरछा शॉक या कार्य)।\n2. फॉर्म में आवश्यक डेटा दर्ज करें।\n3. परिणाम देखने के लिए गणना करें पर क्लिक करें।\n4. नीचे तालिका में इतिहास देखें।\n5. परिणामों को CSV के रूप में निर्यात करें।"
+          }
+        }
+      }
+    });
+
+    const GAMMA = 1.4;
+
+    const ObliqueShockPanel = ({ addToHistory }) => {
+      const [inputs, setInputs] = useState({ mach: '', angle: '' });
+      const [result, setResult] = useState('');
+      const [calculationType, setCalculationType] = useState('');
+
+      const handleInputChange = (e) => {
+        setInputs({ ...inputs, [e.target.name]: e.target.value });
+      };
+
+      const calculate = (type) => {
+        const mach = parseFloat(inputs.mach);
+        const angle = parseFloat(inputs.angle) * Math.PI / 180; // Convert to radians
+        if (isNaN(mach) || (type !== 'waveAngle' && isNaN(angle))) {
+          setResult('Please enter valid numbers');
+          return;
+        }
+
+        let value;
+        switch (type) {
+          case 'mach':
+            value = Math.sqrt((1 + ((GAMMA - 1) / 2) * mach ** 2 * Math.sin(angle) ** 2) / ((GAMMA + 1) / 2));
+            setResult(`Mach Number Behind the Shock: ${value.toFixed(2)}`);
+            addToHistory('Mach Number', value.toFixed(2));
+            break;
+          case 'pressure':
+            value = ((1 + 2 * GAMMA * mach ** 2 * Math.sin(angle) ** 2 - (GAMMA - 1) * mach ** 4 * Math.sin(angle) ** 2) /
+                     (1 + (GAMMA - 1) * mach ** 2 * Math.sin(angle) ** 2));
+            setResult(`Pressure Ratio: ${value.toFixed(2)}`);
+            addToHistory('Pressure Ratio', value.toFixed(2));
+            break;
+          case 'density':
+            value = ((GAMMA + 1) * mach ** 2 * Math.sin(angle) ** 2) / ((GAMMA - 1) * mach ** 2 * Math.sin(angle) ** 2 + 2);
+            setResult(`Density Ratio: ${value.toFixed(2)}`);
+            addToHistory('Density Ratio', value.toFixed(2));
+            break;
+          case 'temperature':
+            value = ((GAMMA - 1) * mach ** 2 * Math.sin(angle) ** 2 + 2) / ((GAMMA + 1) * mach ** 2 * Math.sin(angle) ** 2);
+            setResult(`Temperature Ratio: ${value.toFixed(2)}`);
+            addToHistory('Temperature Ratio', value.toFixed(2));
+            break;
+          case 'waveAngle':
+            value = Math.acos(1 / mach) * 180 / Math.PI;
+            setResult(`Wave Angle: ${value.toFixed(2)}°`);
+            addToHistory('Wave Angle', value.toFixed(2));
+            break;
+        }
+        setCalculationType(type);
+      };
+
+      return (
+        <div className="p-4">
+          <h2 className="text-xl font-bold">{i18next.t('obliqueShock')}</h2>
+          <div className="grid grid-cols-1 md microbiology:grid-cols-2 gap-4 mt-4">
+            <div>
+              <input
+                type="number"
+                name="mach"
+                value={inputs.mach}
+                onChange={handleInputChange}
+                placeholder={i18next.t('initialMach')}
+                className="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('initialMach')}
+              />
+              {calculationType !== 'waveAngle' && (
+                <input
+                  type="number"
+                  name="angle"
+                  value={inputs.angle}
+                  onChange={handleInputChange}
+                  placeholder={i18next.t('shockAngle')}
+                  className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                  aria-label={i18next.t('shockAngle')}
+                />
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => calculate('mach')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateMach')}
+              </button>
+              <button onClick={() => calculate('pressure')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculatePressure')}
+              </button>
+              <button onClick={() => calculate('density')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateDensity')}
+              </button>
+              <button onClick={() => calculate('temperature')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateTemperature')}
+              </button>
+              <button onClick={() => calculate('waveAngle')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateWaveAngle')}
+              </button>
+            </div>
+          </div>
+          {result && <p className="mt-4 text-lg">{i18next.t('result')}: {result}</p>}
+        </div>
+      );
+    };
+
+    const FunctionsPanel = ({ addToHistory }) => {
+      const [inputs, setInputs] = useState({
+        airDensity: '', velocity: '', wingArea: '', liftCoefficient: '', dragCoefficient: '',
+        engineThrust: '', aircraftMass: '', gravity: '', endurance: '', airSpeed: '',
+        enginePower: '', dragPower: '', liftToDrag: ''
+      });
+      const [result, setResult] = useState('');
+      const [calculationType, setCalculationType] = useState('');
+
+      const handleInputChange = (e) => {
+        setInputs({ ...inputs, [e.target.name]: e.target.value });
+      };
+
+      const calculate = (type) => {
+        const values = Object.fromEntries(Object.entries(inputs).map(([key, value]) => [key, parseFloat(value)]));
+        if (Object.values(values).some(v => isNaN(v) && v !== '')) {
+          setResult('Please enter valid numbers');
+          return;
+        }
+
+        let value;
+        switch (type) {
+          case 'lift':
+            value = 0.5 * values.airDensity * values.velocity ** 2 * values.wingArea * values.liftCoefficient;
+            setResult(`Calculated Lift: ${value.toFixed(2)} N`);
+            addToHistory('Lift', value.toFixed(2));
+            break;
+          case 'drag':
+            value = 0.5 * values.airDensity * values.velocity ** 2 * values.wingArea * values.dragCoefficient;
+            setResult(`Calculated Drag: ${value.toFixed(2)} N`);
+            addToHistory('Drag', value.toFixed(2));
+            break;
+          case 'thrust':
+            value = values.engineThrust;
+            setResult(`Calculated Thrust: ${value.toFixed(2)} N`);
+            addToHistory('Thrust', value.toFixed(2));
+            break;
+          case 'weight':
+            value = values.aircraftMass * values.gravity;
+            setResult(`Calculated Weight: ${value.toFixed(2)} N`);
+            addToHistory('Weight', value.toFixed(2));
+            break;
+          case 'climb':
+            value = (values.engineThrust - values.drag) / values.weight;
+            setResult(`Rate of Climb: ${value.toFixed(2)} m/s`);
+            addToHistory('Rate of Climb', value.toFixed(2));
+            break;
+          case 'descent':
+            value = (values.drag - values.engineThrust) / values.weight;
+            setResult(`Rate of Descent: ${value.toFixed(2)} m/s`);
+            addToHistory('Rate of Descent', value.toFixed(2));
+            break;
+          case 'range':
+            value = values.endurance * values.airSpeed * 60;
+            setResult(`Maximum Range: ${value.toFixed(2)} meters`);
+            addToHistory('Maximum Range', value.toFixed(2));
+            break;
+          case 'power':
+            value = values.enginePower - values.dragPower;
+            setResult(`Power Available: ${value.toFixed(2)} Watts`);
+            addToHistory('Power Available', value.toFixed(2));
+            break;
+          case 'glide':
+            value = Math.sqrt(2 * values.weight * values.liftToDrag / values.airDensity / values.wingArea);
+            setResult(`Glide Velocity: ${value.toFixed(2)} m/s`);
+            addToHistory('Glide Velocity', value.toFixed(2));
+            break;
+        }
+        setCalculationType(type);
+      };
+
+      return (
+        <div className="p-4">
+          <h2 className="text-xl font-bold">{i18next.t('functions')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <input
+                type="number"
+                name="airDensity"
+                value={inputs.airDensity}
+                onChange={handleInputChange}
+                placeholder={i18next.t('airDensity')}
+                className="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('airDensity')}
+              />
+              <input
+                type="number"
+                name="velocity"
+                value={inputs.velocity}
+                onChange={handleInputChange}
+                placeholder={i18next.t('velocity')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('velocity')}
+              />
+              <input
+                type="number"
+                name="wingArea"
+                value={inputs.wingArea}
+                onChange={handleInputChange}
+                placeholder={i18next.t('wingArea')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('wingArea')}
+              />
+              <input
+                type="number"
+                name="liftCoefficient"
+                value={inputs.liftCoefficient}
+                onChange={handleInputChange}
+                placeholder={i18next.t('liftCoefficient')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('liftCoefficient')}
+              />
+              <input
+                type="number"
+                name="dragCoefficient"
+                value={inputs.dragCoefficient}
+                onChange={handleInputChange}
+                placeholder={i18next.t('dragCoefficient')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('dragCoefficient')}
+              />
+              <input
+                type="number"
+                name="engineThrust"
+                value={inputs.engineThrust}
+                onChange={handleInputChange}
+                placeholder={i18next.t('engineThrust')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('engineThrust')}
+              />
+              <input
+                type="number"
+                name="aircraftMass"
+                value={inputs.aircraftMass}
+                onChange={handleInputChange}
+                placeholder={i18next.t('aircraftMass')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('aircraftMass')}
+              />
+              <input
+                type="number"
+                name="gravity"
+                value={inputs.gravity}
+                onChange={handleInputChange}
+                placeholder={i18next.t('gravity')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('gravity')}
+              />
+              <input
+                type="number"
+                name="endurance"
+                value={inputs.endurance}
+                onChange={handleInputChange}
+                placeholder={i18next.t('endurance')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('endurance')}
+              />
+              <input
+                type="number"
+                name="airSpeed"
+                value={inputs.airSpeed}
+                onChange={handleInputChange}
+                placeholder={i18next.t('airSpeed')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('airSpeed')}
+              />
+              <input
+                type="number"
+                name="enginePower"
+                value={inputs.enginePower}
+                onChange={handleInputChange}
+                placeholder={i18next.t('enginePower')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('enginePower')}
+              />
+              <input
+                type="number"
+                name="dragPower"
+                value={inputs.dragPower}
+                onChange={handleInputChange}
+                placeholder={i18next.t('dragPower')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('dragPower')}
+              />
+              <input
+                type="number"
+                name="liftToDrag"
+                value={inputs.liftToDrag}
+                onChange={handleInputChange}
+                placeholder={i18next.t('liftToDrag')}
+                className="w-full p-2 border rounded mt-2 dark:bg-gray-800 dark:border-gray-700"
+                aria-label={i18next.t('liftToDrag')}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => calculate('lift')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateLift')}
+              </button>
+              <button onClick={() => calculate('drag')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateDrag')}
+              </button>
+              <button onClick={() => calculate('thrust')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateThrust')}
+              </button>
+              <button onClick={() => calculate('weight')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateWeight')}
+              </button>
+              <button onClick={() => calculate('climb')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateClimb')}
+              </button>
+              <button onClick={() => calculate('descent')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateDescent')}
+              </button>
+              <button onClick={() => calculate('range')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateRange')}
+              </button>
+              <button onClick={() => calculate('power')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculatePower')}
+              </button>
+              <button onClick={() => calculate('glide')} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                {i18next.t('calculateGlide')}
+              </button>
+            </div>
+          </div>
+          {result && <p className="mt-4 text-lg">{i18next.t('result')}: {result}</p>}
+        </div>
+      );
+    };
+
+    const SettingsPanel = ({ toggleLanguage, toggleTheme, enlargeFonts }) => {
+      return (
+        <div className="p-4">
+          <h2 className="text-xl font-bold">{i18next.t('settings')}</h2>
+          <div className="flex flex-col gap-2 mt-4">
+            <button onClick={toggleLanguage} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+              {i18next.t('toggleLanguage')}
+            </button>
+            <button onClick={toggleTheme} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+              {i18next.t('toggleTheme')}
+            </button>
+            <button onClick={enlargeFonts} className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+              {i18next.t('enlargeFonts')}
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    const UserManualPanel = () => {
+      return (
+        <div className="p-4">
+          <h2 className="text-xl font-bold">{i18next.t('userManual')}</h2>
+          <p className="mt-4 whitespace-pre-line">{i18next.t('manualContent')}</p>
+        </div>
+      );
+    };
+
+    const App = () => {
+      const [activeTab, setActiveTab] = useState('obliqueShock');
+      const [history, setHistory] = useState([]);
+      const [fontSize, setFontSize] = useState(16);
+      const [isDarkMode, setIsDarkMode] = useState(false);
+
+      const addToHistory = (parameter, value) => {
+        setHistory([...history, { parameter, value }]);
+      };
+
+      const exportCSV = () => {
+        const csv = ['Parameter,Value', ...history.map(h => `${h.parameter},${h.value}`)].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'calculations.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      const toggleLanguage = () => {
+        i18next.changeLanguage(i18next.language === 'en' ? 'hi' : 'en');
+      };
+
+      const toggleTheme = () => {
+        setIsDarkMode(!isDarkMode);
+        document.body.classList.toggle('dark');
+      };
+
+      const enlargeFonts = () => {
+        setFontSize(fontSize + 2);
+      };
+
+      return (
+        <div className="container mx-auto p-4" style={{ fontSize: `${fontSize}px` }}>
+          <h1 className="text-2xl font-bold text-center">{i18next.t('title')}</h1>
+          <div className="flex border-b mt-4">
+            <button
+              className={`p-2 ${activeTab === 'obliqueShock' ? 'border-b-2 border-blue-500' : ''}`}
+              onClick={() => setActiveTab('obliqueShock')}
+            >
+              {i18next.t('obliqueShock')}
+            </button>
+            <button
+              className={`p-2 ${activeTab === 'functions' ? 'border-b-2 border-blue-500' : ''}`}
+              onClick={() => setActiveTab('functions')}
+            >
+              {i18next.t('functions')}
+            </button>
+            <button
+              className={`p-2 ${activeTab === 'settings' ? 'border-b-2 border-blue-500' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              {i18next.t('settings')}
+            </button>
+            <button
+              className={`p-2 ${activeTab === 'userManual' ? 'border-b-2 border-blue-500' : ''}`}
+              onClick={() => setActiveTab('userManual')}
+            >
+              {i18next.t('userManual')}
+            </button>
+          </div>
+          <div className="mt-4">
+            {activeTab === 'obliqueShock' && <ObliqueShockPanel addToHistory={addToHistory} />}
+            {activeTab === 'functions' && <FunctionsPanel addToHistory={addToHistory} />}
+            {activeTab === 'settings' && <SettingsPanel toggleLanguage={toggleLanguage} toggleTheme={toggleTheme} enlargeFonts={enlargeFonts} />}
+            {activeTab === 'userManual' && <UserManualPanel />}
+          </div>
+          <div className="mt-8">
+            <h2 className="text-xl font-bold">{i18next.t('history')}</h2>
+            <table className="w-full border-collapse mt-4">
+              <thead>
+                <tr className="bg-gray-200 dark:bg-gray-700">
+                  <th className="border p-2">{i18next.t('parameter')}</th>
+                  <th className="border p-2">{i18next.t('value')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((item, index) => (
+                  <tr key={index} className="border">
+                    <td className="border p-2">{item.parameter}</td>
+                    <td className="border p-2">{item.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button onClick={exportCSV} className="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600">
+              {i18next.t('exportCSV')}
+            </button>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
